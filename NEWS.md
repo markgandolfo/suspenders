@@ -1,3 +1,87 @@
+1.11.0 (May 17, 2014)
+
+* Generate a Rails 4.1.1 app and implement fixes for compatibility.
+* Escape ERb in secrets.yml
+* Maintain ActiveRecord test schema.
+* Make Shoulda Matchers work with Spring.
+* Unify Ruby version for gem and suspended apps.
+* Move SMTP variable settings out of initializer.
+* Connect to Postgres on localhost.
+* Add `bin/setup` for contributors.
+* Improve and document TravisCI configuration.
+
+1.10.2 (April 28, 2014)
+
+* Fix bundling Bourbon and Neat.
+
+1.10.1 (April 25, 2014)
+
+* Fix bundling sass-rails.
+
+1.10.0 (April 21, 2014)
+
+* Generate a Rails 4.1 app.
+* Generate a working .ruby-version for Ruby >= 2.1.0.
+* Update Unicorn template to version now preferred by Heroku.
+
+1.9.3 (April 13, 2014)
+
+* Use FactoryGirl.lint instead of custom-generated factory-testing code.
+* Fix Delayed::Job <-> Rails 4.1 dependency conflict.
+
+1.9.2 (April 10, 2014)
+
+* Join Heroku apps in bin/setup.
+* Enable SMTP/TLS in SMTP settings.
+* Silence an RSpec warning.
+
+1.9.1 (April 7, 2014)
+
+* Fix sass-rails environment NilClass error.
+
+1.9.0 (March 24, 2014)
+
+* Add `awesome_print` gem.
+* Add `dev:prime` task placeholder for bootstrapping local dev data.
+* Add fix for I18n deprecation warning from `enforce_available_locales`.
+* Add generated `.travis.yml`.
+* Remove `better_errors` because of issues with Unicorn.
+* Remove fast-failing for RSpec; respect user's `~/.rspec` instead.
+* Update New Relic agent.
+* Update Rails to 4.0.3.
+
+1.8.1 (February 19, 2014)
+
+* Don't distribute rspec binstub with gem.
+
+1.8.0 (February 18, 2014)
+
+* Make the .git/safe directory in bin/setup.
+* Require `rails_12factor` gem only on Heroku.
+* Require mailer config on staging and production.
+* Add rspec binstub.
+* Fix .ruby-version on Ruby 2.1.0.
+* Replace Flutie's `page_title` with `title` gem.
+* Don't run factory specs twice.
+* Inherit staging config from production.
+* Internal: convert tests from Cucumber to RSpec.
+* Don't include `prefilled_input.js`.
+* Fix Rack class name - Deflater instead of Timeout.
+* Add Pry Rails.
+* Add Spring.
+* Add Dotenv to development and test environments to load environment variables
+  from the `.env` file.
+* Reduce ActiveRecord connection pool from 5 to 2.
+
+1.7.0 (December 6, 2013)
+
+* Keep `db/schema.rb` under version control.
+* Fast-fail if any part of `bin/setup` fails.
+* Move secret key out of version control.
+* Create `.ruby-version` in generated applications.
+* Add placeholder modules and directories for feature specs.
+* Improve README to include setup instructions.
+
 1.6.0 (November 28, 2013)
 
 * Do not create `.rspec` file as the settings are not project-specific.

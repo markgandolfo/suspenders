@@ -15,7 +15,7 @@ Then run:
 
     suspenders projectname
 
-This will create a Rails 4.0 app in `projectname`.
+This will create a Rails app in `projectname` using the latest version of Rails.
 
 By default this script creates a new git repository. See below if you
 want to use it against an existing repo.
@@ -24,8 +24,8 @@ Gemfile
 -------
 
 To see the latest and greatest gems, look at Suspenders'
-[templates/Gemfile_clean](templates/Gemfile_clean),
-which will be appended to the default generated projectname/Gemfile.
+[Gemfile](templates/Gemfile.erb), which will be appended to the default
+generated projectname/Gemfile.
 
 It includes application gems like:
 
@@ -35,8 +35,8 @@ It includes application gems like:
   processing
 * [Email Validator](https://github.com/balexand/email_validator) for email
   validation
-* [Flutie](https://github.com/thoughtbot/flutie) for `page_title` and
-  `body_class` view helpers
+* [Flutie](https://github.com/thoughtbot/flutie) for and `body_class` view
+  helper
 * [High Voltage](https://github.com/thoughtbot/high_voltage) for static pages
 * [jQuery Rails](https://github.com/rails/jquery-rails) for jQuery
 * [Neat](https://github.com/thoughtbot/neat) for semantic grids
@@ -48,12 +48,21 @@ It includes application gems like:
 * [Simple Form](https://github.com/plataformatec/simple_form) for form markup
   and style
 * [Unicorn](https://github.com/defunkt/unicorn) to serve HTTP requests
+* [Title](https://github.com/calebthompson/title) for storing titles in
+  translations
 
 And gems only for staging and production like:
 
 * [New Relic RPM](https://github.com/newrelic/rpm) for monitoring performance
-* [Rails 12 Factor](https://github.com/heroku/rails_12factor) to making running
+* [Rails 12 Factor](https://github.com/heroku/rails_12factor) to make running
   Rails 4 apps easier on Heroku
+
+And development gems like:
+
+* [Dotenv](https://github.com/bkeepers/dotenv) for loading environment variables
+* [Pry Rails](https://github.com/rweng/pry-rails) for debugging
+* [Spring](https://github.com/rails/spring) for fast Rails actions via
+  pre-loading
 
 And testing gems like:
 
@@ -75,12 +84,22 @@ Suspenders also comes with:
 * The [`./bin/setup`][bin] convention for new developer setup
 * Rails' flashes set up and in application layout
 * A few nice time formats set up for localization
-* `Rack::Timeout` to [compress responses with Gzip][compress]
+* `Rack::Deflater` to [compress responses with Gzip][compress]
 * [Fast-failing factories][fast]
+* A [low database connection pool limit][pool]
+* [Safe binstubs][binstub]
+* [t() and l() in specs without prefixing with I18n][i18n]
+* An automatically-created `SECRET_KEY_BASE` environment variable in all
+  environments.
+* Configuration for [Travis Pro][travis] continuous integration.
 
 [bin]: http://robots.thoughtbot.com/bin-setup
 [compress]: http://robots.thoughtbot.com/content-compression-with-rack-deflater/
 [fast]: http://robots.thoughtbot.com/testing-your-factories-first
+[pool]: https://devcenter.heroku.com/articles/concurrency-and-database-connections
+[binstub]: https://github.com/thoughtbot/suspenders/pull/282
+[i18n]: https://github.com/thoughtbot/suspenders/pull/304
+[travis]: http://docs.travis-ci.com/user/travis-pro/
 
 Heroku
 ------
@@ -120,7 +139,7 @@ This has the same effect as running:
 Dependencies
 ------------
 
-Suspenders requires Ruby 1.9.2 or greater.
+Suspenders requires the latest version of Ruby.
 
 Some gems included in Suspenders have native extensions. You should have GCC
 installed on your machine before generating an app with Suspenders.
@@ -132,7 +151,7 @@ Use [Command Line Tools for XCode](https://developer.apple.com/downloads/index.a
 for Lion (OS X 10.7) or Mountain Lion (OS X 10.8).
 
 We use [Capybara Webkit](https://github.com/thoughtbot/capybara-webkit) for
-full-stack Javascript integration testing. It requires QT. Instructions for
+full-stack JavaScript integration testing. It requires QT. Instructions for
 installing QT are
 [here](https://github.com/thoughtbot/capybara-webkit/wiki/Installing-Qt-and-compiling-capybara-webkit).
 
@@ -142,12 +161,14 @@ Issues
 ------
 
 If you have problems, please create a
-[Github Issue](https://github.com/thoughtbot/suspenders/issues).
+[GitHub Issue](https://github.com/thoughtbot/suspenders/issues).
 
 Contributing
 ------------
 
-Please see CONTRIBUTING.md for details.
+To update Suspenders' Ruby version, change `.ruby-version` and `.travis.yml`.
+
+Please see CONTRIBUTING.md for further details.
 
 Credits
 -------
@@ -162,5 +183,5 @@ The names and logos for thoughtbot are trademarks of thoughtbot, inc.
 License
 -------
 
-Suspenders is Copyright © 2008-2013 thoughtbot. It is free software, and may be
+Suspenders is Copyright © 2008-2014 thoughtbot. It is free software, and may be
 redistributed under the terms specified in the LICENSE file.

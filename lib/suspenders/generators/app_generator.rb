@@ -21,13 +21,12 @@ module Suspenders
     end
 
     def suspenders_customization
-      invoke :remove_files_we_dont_need
       invoke :customize_gemfile
-      invoke :setup_database
       invoke :setup_development_environment
       invoke :setup_test_environment
       invoke :setup_production_environment
       invoke :setup_staging_environment
+      invoke :setup_secret_token
       invoke :create_suspenders_views
       invoke :setup_coffeescript
       invoke :configure_app
@@ -36,19 +35,20 @@ module Suspenders
       invoke :customize_error_pages
       invoke :remove_routes_comment_lines
       invoke :setup_git
+      invoke :setup_database
       invoke :create_heroku_apps
       invoke :create_github_repo
       invoke :outro
     end
 
-    def remove_files_we_dont_need
-      build :remove_public_index
-      build :remove_rails_logo_image
-    end
-
     def customize_gemfile
       build :replace_gemfile
       build :set_ruby_to_version_being_used
+
+      if options[:heroku]
+        build :setup_heroku_specific_gems
+      end
+
       bundle_command 'install'
     end
 
@@ -67,19 +67,20 @@ module Suspenders
       build :raise_on_delivery_errors
       build :raise_on_unpermitted_parameters
       build :provide_setup_script
+      build :provide_dev_prime_task
       build :configure_generators
     end
 
     def setup_test_environment
       say 'Setting up the test environment'
-      build :enable_factory_girl_syntax
-      build :test_factories_first
+      build :set_up_factory_girl_for_rspec
       build :generate_rspec
       build :configure_rspec
-      build :use_rspec_binstub
       build :configure_background_jobs_for_rspec
       build :enable_database_cleaner
-      build :configure_capybara_webkit
+      build :configure_spec_support_features
+      build :configure_travis
+      build :configure_i18n_in_specs
     end
 
     def setup_production_environment
@@ -93,6 +94,11 @@ module Suspenders
       build :setup_staging_environment
     end
 
+    def setup_secret_token
+      say 'Moving secret token out of version control'
+      build :setup_secret_token
+    end
+
     def create_suspenders_views
       say 'Creating suspenders views'
       build :create_partials_directory
@@ -104,18 +110,16 @@ module Suspenders
     def setup_coffeescript
       say 'Setting up CoffeeScript defaults'
       build :remove_turbolinks
-      build :create_common_javascripts
     end
 
     def configure_app
       say 'Configuring app'
       build :configure_action_mailer
-      build :blacklist_active_record_attributes
-      build :configure_strong_parameters
       build :configure_time_zone
       build :configure_time_formats
       build :configure_rack_timeout
       build :disable_xml_params
+      build :fix_i18n_deprecation_warning
       build :setup_default_rake_task
       build :configure_unicorn
       build :setup_foreman
@@ -139,6 +143,7 @@ module Suspenders
         say 'Creating Heroku apps'
         build :create_heroku_apps
         build :set_heroku_remotes
+        build :set_heroku_rails_secrets
       end
     end
 
@@ -155,11 +160,6 @@ module Suspenders
 
     def init_git
       build :init_git
-    end
-
-    def copy_libraries
-      say 'Copying libraries'
-      build :copy_libraries
     end
 
     def copy_miscellaneous_files

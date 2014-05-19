@@ -6,14 +6,6 @@ module Suspenders
       template 'README.md.erb', 'README.md'
     end
 
-    def remove_public_index
-      remove_file 'public/index.html'
-    end
-
-    def remove_rails_logo_image
-      remove_file 'app/assets/images/rails.png'
-    end
-
     def raise_on_delivery_errors
       replace_in_file 'config/environments/development.rb',
         'raise_delivery_errors = false', 'raise_delivery_errors = true'
@@ -38,6 +30,10 @@ module Suspenders
       run 'chmod a+x bin/setup'
     end
 
+    def provide_dev_prime_task
+      copy_file 'development_seeds.rb', 'lib/tasks/development_seeds.rake'
+    end
+
     def configure_generators
       config = <<-RUBY
     config.generators do |generate|
@@ -55,20 +51,15 @@ module Suspenders
       inject_into_class 'config/application.rb', 'Application', config
     end
 
-    def enable_factory_girl_syntax
-      copy_file 'factory_girl_syntax_rspec.rb', 'spec/support/factory_girl.rb'
-    end
-
-    def test_factories_first
-      copy_file 'factories_spec.rb', 'spec/models/factories_spec.rb'
-      append_file 'Rakefile', factories_spec_rake_task
+    def set_up_factory_girl_for_rspec
+      copy_file 'factory_girl_rspec.rb', 'spec/support/factory_girl.rb'
     end
 
     def configure_smtp
-      copy_file 'smtp.rb', 'config/initializers/smtp.rb'
+      copy_file 'smtp.rb', 'config/smtp.rb'
 
       prepend_file 'config/environments/production.rb',
-        "require Rails.root.join('config/initializers/smtp')\n"
+        "require Rails.root.join('config/smtp')\n"
 
       config = <<-RUBY
 
@@ -92,10 +83,21 @@ module Suspenders
     end
 
     def setup_staging_environment
-      run 'cp config/environments/production.rb config/environments/staging.rb'
+      staging_file = 'config/environments/staging.rb'
+      copy_file 'staging.rb', staging_file
 
-      prepend_file 'config/environments/staging.rb',
-        "Mail.register_interceptor RecipientInterceptor.new(ENV['EMAIL_RECIPIENTS'])\n"
+      config = <<-RUBY
+
+Rails.application.configure do
+  # ...
+end
+      RUBY
+
+      append_file staging_file, config
+    end
+
+    def setup_secret_token
+      template 'secrets.yml', 'config/secrets.yml', force: true
     end
 
     def create_partials_directory
@@ -113,7 +115,7 @@ module Suspenders
     def create_application_layout
       template 'suspenders_layout.html.erb.erb',
         'app/views/layouts/application.html.erb',
-        :force => true
+        force: true
     end
 
     def remove_turbolinks
@@ -122,31 +124,36 @@ module Suspenders
         ''
     end
 
-    def create_common_javascripts
-      directory 'javascripts', 'app/assets/javascripts'
-    end
-
     def use_postgres_config_template
       template 'postgresql_database.yml.erb', 'config/database.yml',
-        :force => true
+        force: true
     end
 
     def create_database
-      bundle_command 'exec rake db:create'
+      bundle_command 'exec rake db:create db:migrate'
     end
 
     def replace_gemfile
       remove_file 'Gemfile'
-      copy_file 'Gemfile_clean', 'Gemfile'
+      template 'Gemfile.erb', 'Gemfile'
     end
 
     def set_ruby_to_version_being_used
-      inject_into_file 'Gemfile', "\n\nruby '#{RUBY_VERSION}'",
-        after: /source 'https:\/\/rubygems.org'/
+      create_file '.ruby-version', "#{Suspenders::RUBY_VERSION}\n"
+    end
+
+    def setup_heroku_specific_gems
+      inject_into_file 'Gemfile', "\n\s\sgem 'rails_12factor'",
+        after: /group :staging, :production do/
     end
 
     def enable_database_cleaner
       copy_file 'database_cleaner_rspec.rb', 'spec/support/database_cleaner.rb'
+    end
+
+    def configure_spec_support_features
+      empty_directory_with_keep_file 'spec/features'
+      empty_directory_with_keep_file 'spec/support/features'
     end
 
     def configure_rspec
@@ -154,9 +161,12 @@ module Suspenders
       copy_file 'spec_helper.rb', 'spec/spec_helper.rb'
     end
 
-    def use_rspec_binstub
-      run 'bundle binstub rspec-core'
-      run 'rm bin/autospec'
+    def configure_travis
+      template 'travis.yml.erb', '.travis.yml'
+    end
+
+    def configure_i18n_in_specs
+      copy_file 'i18n.rb', 'spec/support/i18n.rb'
     end
 
     def configure_background_jobs_for_rspec
@@ -188,12 +198,16 @@ module Suspenders
       action_mailer_host 'production', "#{app_name}.com"
     end
 
-    def generate_rspec
-      generate 'rspec:install'
+    def fix_i18n_deprecation_warning
+      config = <<-RUBY
+    config.i18n.enforce_available_locales = true
+
+      RUBY
+      inject_into_class 'config/application.rb', 'Application', config
     end
 
-    def generate_clearance
-      generate 'clearance:install'
+    def generate_rspec
+      generate 'rspec:install'
     end
 
     def configure_unicorn
@@ -244,10 +258,19 @@ module Suspenders
 
 # Set up staging and production git remotes
 git remote add staging git@heroku.com:#{app_name}-staging.git
+heroku join --app #{app_name}-staging
+
 git remote add production git@heroku.com:#{app_name}-production.git
+heroku join --app #{app_name}-production
       RUBY
 
       append_file 'bin/setup', remotes
+    end
+
+    def set_heroku_rails_secrets
+      path_addition = override_path_for_tests
+      run "#{path_addition} heroku config:add SECRET_KEY_BASE=#{generate_secret} --remote=staging"
+      run "#{path_addition} heroku config:add SECRET_KEY_BASE=#{generate_secret} --remote=production"
     end
 
     def create_github_repo(repo_name)
@@ -273,8 +296,8 @@ git remote add production git@heroku.com:#{app_name}-production.git
 
     def remove_routes_comment_lines
       replace_in_file 'config/routes.rb',
-        /Application\.routes\.draw do.*end/m,
-        "Application.routes.draw do\nend"
+        /Rails\.application\.routes\.draw do.*end/m,
+        "Rails.application.routes.draw do\nend"
     end
 
     def disable_xml_params
@@ -291,13 +314,17 @@ git remote add production git@heroku.com:#{app_name}-production.git
 
     def override_path_for_tests
       if ENV['TESTING']
-        support_bin = File.expand_path(File.join('..', '..', '..', 'features', 'support', 'bin'))
+        support_bin = File.expand_path(File.join('..', '..', 'spec', 'fakes', 'bin'))
         "PATH=#{support_bin}:$PATH"
       end
     end
 
     def factories_spec_rake_task
       IO.read find_in_source_paths('factories_spec_rake_task.rb')
+    end
+
+    def generate_secret
+      SecureRandom.hex(64)
     end
   end
 end

@@ -17,10 +17,14 @@ end
 
 after_fork do |server, worker|
   Signal.trap 'TERM' do
-    puts 'Unicorn worker intercepting TERM and doing nothing. Wait for master to sent QUIT'
+    puts 'Unicorn worker intercepting TERM and doing nothing. Wait for master to send QUIT'
   end
 
   if defined? ActiveRecord::Base
-    ActiveRecord::Base.establish_connection
+    config = ActiveRecord::Base.configurations[Rails.env] ||
+      Rails.application.config.database_configuration[Rails.env]
+    config['reaping_frequency'] = (ENV['DB_REAPING_FREQUENCY'] || 10).to_i
+    config['pool'] = (ENV['DB_POOL'] || 2).to_i
+    ActiveRecord::Base.establish_connection(config)
   end
 end
